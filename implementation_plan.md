@@ -11,11 +11,11 @@ Este documento serve como guia de implementação para o sistema AutoWriter Mult
     - [x] Configurar ambiente local (Docker/Node/PHP) (Arquivos criados; Docker deve ser iniciado pelo usuário)
     - [x] Criar banco de dados PostgreSQL para o Dashboard (Configuração pronta em `docker-compose.yml`)
 
-- [ ] **Configuração do WordPress** (Ação Manual Obrigatória)
-    - [ ] Validar instalação WordPress Multisite
-    - [ ] Criar usuário `autowriter-bot` com permissões de administrador
-    - [ ] Gerar Application Password para o bot
-    - [ ] Mapear IDs dos blogs (`blog_key` -> `blog_id`) e preencher em `dashboard/.env`
+- [x] **Configuração do WordPress** (Ação Manual Obrigatória)
+    - [x] Validar instalação WordPress Multisite
+    - [x] Criar usuário `autowriter-bot` com permissões de administrador
+    - [x] Gerar Application Password para o bot
+    - [x] Mapear IDs dos blogs (`blog_key` -> `blog_id`) e preencher em `dashboard/.env`
 
 ## Fase 1: Dashboard Central (Backend)
 
