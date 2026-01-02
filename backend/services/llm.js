@@ -110,4 +110,3 @@ async function logLLMUsage(jobId, task, config, usage, latency, success) {
         console.error('Failed to log LLM usage:', err.message);
     }
 }
-Sands
