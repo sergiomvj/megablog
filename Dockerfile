@@ -11,8 +11,7 @@ RUN npm install --production --legacy-peer-deps
 # Copia o código do backend
 COPY backend/ ./
 
-EXPOSE 3001
+EXPOSE 3000
 
 # Executa migração e inicia o servidor
-# Usamos node diretamente para garantir que funcione sem depender de scripts do package.json se necessário
-CMD ["sh", "-c", "node migrate.js && node index.js"]
+CMD ["sh", "-c", "node migrate.js || true && node index.js"]
