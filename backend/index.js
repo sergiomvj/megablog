@@ -24,8 +24,13 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
-// --- Basic Routes for Proxy/Health ---
-app.get('/', (req, res) => res.send('AutoWriter Backend is Running'));
+// --- Logger ---
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
+
+// --- Health Check ---
 app.get('/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
 
 // --- API Endpoints ---
@@ -173,7 +178,17 @@ app.get('*', (req, res) => {
     }
 });
 
+// --- Global Error Handler ---
+app.use((err, req, res, next) => {
+    console.error('❌ Erro Fatal no Servidor:', err);
+    res.status(500).json({
+        error: 'Erro Interno',
+        message: err.message,
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Backend is loud and clear on port ${PORT}`);
-    console.log(`URL: http://0.0.0.0:${PORT}`);
+    console.log(`DASHBOARD: ${path.join(__dirname, 'dist')}`);
 });
