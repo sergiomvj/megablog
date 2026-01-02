@@ -19,6 +19,10 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
+// --- Basic Routes for Proxy/Health ---
+app.get('/', (req, res) => res.send('AutoWriter Backend is Running'));
+app.get('/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
+
 // --- API Endpoints ---
 
 app.get('/api/batches', async (req, res) => {
@@ -148,4 +152,7 @@ async function saveArtifact(jobId, task, data) {
     await pool.query('INSERT INTO job_artifacts (id, job_id, revision, task, json_data) VALUES (?, ?, ?, ?, ?)', [uuidv4(), jobId, 1, task, JSON.stringify(data)]);
 }
 
-app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Backend is loud and clear on port ${PORT}`);
+    console.log(`URL: http://0.0.0.0:${PORT}`);
+});
