@@ -1,0 +1,146 @@
+import React, { useEffect, useState } from 'react';
+import { Screen, Stat, Job } from '../types';
+import { api } from '../services/api';
+
+interface DashboardProps {
+  onNavigate: (screen: Screen) => void;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
+  const [recentJobs, setRecentJobs] = useState<Job[]>([
+    { id: '204', title: 'Lifestyle Network', site: 'Batch #204', category: 'General', status: 'Processing', progress: 45, timestamp: 'Now', icon: 'autorenew' },
+    { id: '4921', title: 'Tech Blog Batch', site: 'tech.site.com', category: 'Tech', status: 'Published', timestamp: '2m ago', icon: 'check_circle' },
+    { id: '4922', title: 'Finance Update', site: 'finance.hub', category: 'Finance', status: 'Queued', timestamp: 'Scheduled', icon: 'schedule' },
+    { id: '4923', title: 'Crypto Daily', site: 'crypto.news', category: 'Crypto', status: 'Failed', timestamp: 'Yesterday', icon: 'error' },
+  ]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const data = await api.getJobs();
+        if (data && data.length > 0) {
+          setRecentJobs(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, []);
+
+  const stats: Stat[] = [
+    { label: 'Articles Published', value: '12,450', trend: '+12%', icon: 'article', color: 'bg-primary/10 text-primary' },
+    { label: 'Active Sites', value: '15', icon: 'language', color: 'bg-blue-500/10 text-blue-500' },
+    { label: 'Pending Jobs', value: '3', icon: 'pending_actions', color: 'bg-amber-500/10 text-amber-500' },
+    { label: 'Success Rate', value: '98%', icon: 'analytics', color: 'bg-violet-500/10 text-violet-500' },
+  ];
+
+
+  return (
+    <div className="flex flex-col h-full bg-background-dark pb-32 overflow-y-auto no-scrollbar">
+      <header className="sticky top-0 z-20 bg-background-dark/90 backdrop-blur-md px-4 py-4 border-b border-white/5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-full border-2 border-primary/20 bg-[url('https://picsum.photos/100/100')] bg-cover"></div>
+          <div>
+            <h1 className="text-sm font-bold tracking-wide uppercase text-primary">SmartBlog</h1>
+            <p className="text-xs text-slate-400 font-medium">Multisite Admin</p>
+          </div>
+        </div>
+        <button onClick={() => onNavigate(Screen.SETTINGS)} className="size-10 flex items-center justify-center rounded-full hover:bg-white/10 text-slate-400 transition-colors">
+          <span className="material-symbols-outlined">settings</span>
+        </button>
+      </header>
+
+      <main className="p-5">
+        <section className="mb-6">
+          <h2 className="text-2xl font-bold tracking-tight">Good Morning, Admin.</h2>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="material-symbols-outlined text-emerald-500 text-[18px]">check_circle</span>
+            <p className="text-sm font-medium text-slate-400">All systems operational. Network active.</p>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-2 gap-3 mb-8">
+          {stats.map((stat, i) => (
+            <div key={i} className="bg-surface-dark rounded-xl p-4 shadow-sm border border-white/5 flex flex-col justify-between h-32">
+              <div className="flex justify-between items-start">
+                <span className={`p-2 rounded-lg ${stat.color}`}>
+                  <span className="material-symbols-outlined text-[20px]">{stat.icon}</span>
+                </span>
+                {stat.trend && (
+                  <span className="text-xs font-semibold text-emerald-500 flex items-center gap-0.5">
+                    <span className="material-symbols-outlined text-[14px]">trending_up</span>
+                    {stat.trend}
+                  </span>
+                )}
+              </div>
+              <div>
+                <p className="text-2xl font-bold mt-2">{stat.value}</p>
+                <p className="text-xs font-medium text-slate-400 mt-1">{stat.label}</p>
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold">Recent Activity</h3>
+            <button onClick={() => onNavigate(Screen.QUEUE)} className="text-xs font-semibold text-primary">View All</button>
+          </div>
+          <div className="flex flex-col gap-3">
+            {recentJobs.map((job) => (
+              <div
+                key={job.id}
+                onClick={() => onNavigate(Screen.QUEUE)}
+                className="bg-surface-dark rounded-xl p-4 border border-white/5 hover:border-white/10 transition-colors cursor-pointer relative overflow-hidden group"
+              >
+                {job.status === 'Processing' && job.progress !== undefined && (
+                  <div className="absolute bottom-0 left-0 h-1 bg-slate-700 w-full">
+                    <div className="h-full bg-primary transition-all duration-500" style={{ width: `${job.progress}%` }}></div>
+                  </div>
+                )}
+                <div className="flex items-center gap-4">
+                  <div className={`size-10 rounded-lg flex items-center justify-center shrink-0 ${job.status === 'Published' ? 'bg-emerald-500/10 text-emerald-500' :
+                    job.status === 'Failed' ? 'bg-rose-500/10 text-rose-500' :
+                      job.status === 'Processing' ? 'bg-primary/10 text-primary' : 'bg-slate-700/50 text-slate-400'
+                    }`}>
+                    <span className="material-symbols-outlined">{job.icon}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-bold truncate">{job.title}</p>
+                      <span className="text-[10px] text-slate-500">{job.timestamp}</span>
+                    </div>
+                    <p className={`text-xs mt-0.5 ${job.status === 'Published' ? 'text-emerald-400' :
+                      job.status === 'Failed' ? 'text-rose-400' : 'text-slate-400'
+                      }`}>
+                      {job.status === 'Processing' ? `Batch #${job.id} • ${job.progress}% Complete` :
+                        job.status === 'Queued' ? `Scheduled for 2:00 PM` :
+                          job.status === 'Failed' ? 'Connection timeout' : 'Completed successfully'}
+                    </p>
+                  </div>
+                  <span className="material-symbols-outlined text-slate-500 text-[20px]">chevron_right</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+
+      <div className="fixed bottom-24 left-0 right-0 p-5 bg-gradient-to-t from-background-dark via-background-dark to-transparent pt-12 max-w-md mx-auto z-40 pointer-events-none">
+        <button
+          onClick={() => onNavigate(Screen.UPLOAD)}
+          className="w-full h-14 bg-primary hover:bg-blue-600 active:scale-[0.98] transition-all rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-3 group pointer-events-auto"
+        >
+          <span className="material-symbols-outlined text-white group-hover:rotate-90 transition-transform">add</span>
+          <span className="text-white font-bold text-lg">Start New Batch</span>
+        </button>
+      </div>
+    </div >
+  );
+};
+
+export default Dashboard;

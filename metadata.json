@@ -1,0 +1,7 @@
+{
+  "name": "SmartBlog",
+  "description": "A high-performance dashboard for managing large-scale automated content generation across multiple sites, including job tracking, API configuration, and cost analysis.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
