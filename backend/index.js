@@ -24,29 +24,34 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
-// --- Database Readiness Check ---
-app.use(async (req, res, next) => {
-    try {
-        await pool.query('SELECT 1');
-        next();
-    } catch (err) {
-        console.error('⚠️ Requisição bloqueada: Banco de dados inacessível.');
-        res.status(503).json({ error: 'Database Unavailable', details: err.message });
-    }
-});
-
 // --- Logger ---
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 });
 
-// --- Health Check ---
+// --- Health Check (Sempre disponível) ---
 app.get('/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
 
-// --- API Endpoints ---
+// --- Serve Frontend Assets (Sempre disponível) ---
+const distPath = path.join(__dirname, 'dist');
+console.log(`[FILESYSTEM] Mapeando Dashboard em: ${distPath}`);
 
-app.get('/api/batches', async (req, res) => {
+app.use(express.static(distPath));
+
+// --- Database Readiness Check (Somente para API) ---
+const dbCheck = async (req, res, next) => {
+    try {
+        await pool.query('SELECT 1');
+        next();
+    } catch (err) {
+        console.error('❌ Erro de Banco na API:', err.message);
+        res.status(503).json({ error: 'Database Unavailable', details: err.message });
+    }
+};
+
+// --- API Endpoints ---
+app.get('/api/batches', dbCheck, async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM batches ORDER BY created_at DESC');
         res.json(rows);
@@ -55,7 +60,7 @@ app.get('/api/batches', async (req, res) => {
     }
 });
 
-app.get('/api/jobs', async (req, res) => {
+app.get('/api/jobs', dbCheck, async (req, res) => {
     try {
         const { batch_id } = req.query;
         const [rows] = batch_id
@@ -67,7 +72,7 @@ app.get('/api/jobs', async (req, res) => {
     }
 });
 
-app.post('/api/upload', upload.single('csv'), async (req, res) => {
+app.post('/api/upload', [dbCheck, upload.single('csv')], async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
     try {
@@ -173,19 +178,14 @@ async function saveArtifact(jobId, task, data) {
     await pool.query('INSERT INTO job_artifacts (id, job_id, revision, task, json_data) VALUES (?, ?, ?, ?, ?)', [uuidv4(), jobId, 1, task, JSON.stringify(data)]);
 }
 
-// --- Serve Frontend Assets ---
-// Servir arquivos estáticos da pasta dist (gerada pelo build do Vite)
-app.use(express.static(path.join(__dirname, 'dist')));
-
 // Rota para qualquer outra coisa (SPA Routing)
-// Se não for uma rota de API, entrega o index.html do React
 app.get('*', (req, res) => {
-    // Evita loop infinito se a pasta dist não existir
-    const indexPath = path.join(__dirname, 'dist', 'index.html');
+    const indexPath = path.join(distPath, 'index.html');
     if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
     } else {
-        res.status(404).send('Frontend build not found. Please run npm run build.');
+        console.error(`❌ Erro 404: Arquivo não encontrado em ${indexPath}`);
+        res.status(404).send(`Dashboard não encontrado no servidor. Caminho verificado: ${indexPath}`);
     }
 });
 
@@ -194,12 +194,11 @@ app.use((err, req, res, next) => {
     console.error('❌ Erro Fatal no Servidor:', err);
     res.status(500).json({
         error: 'Erro Interno',
-        message: err.message,
-        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+        message: err.message
     });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Backend is loud and clear on port ${PORT}`);
-    console.log(`DASHBOARD: ${path.join(__dirname, 'dist')}`);
+    console.log(`DASHBOARD: ${distPath}`);
 });
