@@ -8,6 +8,11 @@ import fs from 'fs';
 import { pool } from './services/db.js';
 import { callLLM } from './services/llm.js';
 import { publishToWP } from './services/wordpress.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -151,6 +156,22 @@ async function runJobPipeline(job) {
 async function saveArtifact(jobId, task, data) {
     await pool.query('INSERT INTO job_artifacts (id, job_id, revision, task, json_data) VALUES (?, ?, ?, ?, ?)', [uuidv4(), jobId, 1, task, JSON.stringify(data)]);
 }
+
+// --- Serve Frontend Assets ---
+// Servir arquivos estáticos da pasta dist (gerada pelo build do Vite)
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Rota para qualquer outra coisa (SPA Routing)
+// Se não for uma rota de API, entrega o index.html do React
+app.get('*', (req, res) => {
+    // Evita loop infinito se a pasta dist não existir
+    const indexPath = path.join(__dirname, 'dist', 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).send('Frontend build not found. Please run npm run build.');
+    }
+});
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Backend is loud and clear on port ${PORT}`);

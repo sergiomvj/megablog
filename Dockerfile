@@ -1,16 +1,25 @@
-FROM node:20-slim
-
+# Estágio 1: Build do Frontend (React/Vite)
+FROM node:20-slim AS frontend-builder
 WORKDIR /app
+COPY package*.json ./
+# Instalando todas as dependências (incluindo dev para o build do Vite)
+RUN npm install --legacy-peer-deps
+COPY . .
+RUN npm run build
 
-# Somente as dependências do BACKEND para evitar conflitos com o frontend (recharts/react)
+# Estágio 2: Setup do Backend (Node.js)
+FROM node:20-slim
+WORKDIR /app
+# Copia apenas o necessário do backend para manter a imagem leve
 COPY backend/package*.json ./
-
-# Usamos --legacy-peer-deps por segurança contra conflitos de peer dependencies
 RUN npm install --production --legacy-peer-deps
-
-# Copia o código do backend
 COPY backend/ ./
 
+# Copia o frontend compilado para dentro da pasta dist do backend
+COPY --from=frontend-builder /app/dist ./dist
+
+# Porta para o tráfego WEB (Dashboard + API)
+# O Easypanel mapeia esta porta para o seu subdomínio
 EXPOSE 3000
 
 # Executa migração e inicia o servidor
