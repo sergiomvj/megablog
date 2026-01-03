@@ -7,6 +7,7 @@ import JobDetails from './screens/JobDetails';
 import Settings from './screens/Settings';
 import UploadCSV from './screens/UploadCSV';
 import CostOverview from './screens/CostOverview';
+import Blogs from './screens/Blogs';
 import Navigation from './components/Navigation';
 
 const App: React.FC = () => {
@@ -54,6 +55,8 @@ const App: React.FC = () => {
         return <UploadCSV onNavigate={navigateTo} />;
       case Screen.COSTS:
         return <CostOverview onNavigate={navigateTo} />;
+      case Screen.BLOGS:
+        return <Blogs onNavigate={navigateTo} />;
       default:
         return <Dashboard onNavigate={navigateTo} />;
     }

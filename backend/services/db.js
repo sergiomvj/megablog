@@ -3,25 +3,30 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Configuração robusta para MariaDB no Easypanel
-const connectionConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT) || 3306,
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME || 'webserver',
-    // No Easypanel, conexões internas via rede Docker costumam falhar com SSL "auto"
-    // Vamos desabilitar SSL explicitamente para resolver o erro "reading communication packets"
-    ssl: false,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    connectTimeout: 20000 // 20 segundos para evitar timeouts prematuros
-};
+// Configuração robusta para MariaDB/MySQL (Local ou VPS)
+let pool;
 
-console.log(`[DB] Tentando conectar ao Host: ${connectionConfig.host}:${connectionConfig.port}`);
+if (process.env.DATABASE_URL) {
+    console.log('[DB] Usando Connection String do DATABASE_URL');
+    pool = mysql.createPool(process.env.DATABASE_URL + '?ssl={"rejectUnauthorized":false}');
+} else {
+    const connectionConfig = {
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT) || 3306,
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME || 'webserver',
+        ssl: false,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+        connectTimeout: 20000
+    };
+    console.log(`[DB] Tentando conectar ao Host: ${connectionConfig.host}:${connectionConfig.port}`);
+    pool = mysql.createPool(connectionConfig);
+}
 
-export const pool = mysql.createPool(connectionConfig);
+export { pool };
 
 // Teste de conexão com log detalhado
 pool.query('SELECT 1').then(() => {

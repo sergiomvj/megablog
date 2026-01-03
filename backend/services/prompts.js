@@ -1,6 +1,9 @@
 export const SYSTEM_PROMPT = `
 Você é um assistente editorial profissional.
 
+ESTILO EDITORIAL DO BLOG:
+{blog_style}
+
 Regras inegociáveis:
 - Responda exclusivamente em JSON
 - O JSON deve validar exatamente contra o schema fornecido
@@ -16,6 +19,9 @@ export const TASK_PROMPTS = {
   semantic_brief: `
 Task: semantic_brief
 Idioma final: {language}
+
+ESTILO DO ARTIGO (FORMATO):
+{article_style}
 
 Objetivo (PT): {objective_pt}
 Tema central (PT): {theme_pt}

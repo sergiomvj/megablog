@@ -32,10 +32,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   }, []);
 
   const stats: Stat[] = [
-    { label: 'Articles Published', value: '12,450', trend: '+12%', icon: 'article', color: 'bg-primary/10 text-primary' },
-    { label: 'Active Sites', value: '15', icon: 'language', color: 'bg-blue-500/10 text-blue-500' },
-    { label: 'Pending Jobs', value: '3', icon: 'pending_actions', color: 'bg-amber-500/10 text-amber-500' },
-    { label: 'Success Rate', value: '98%', icon: 'analytics', color: 'bg-violet-500/10 text-violet-500' },
+    { label: 'Artigos Publicados', value: '1,240', trend: '+5%', icon: 'article', color: 'bg-primary/10 text-primary' },
+    { label: 'Sites Conectados', value: '0', icon: 'language', color: 'bg-blue-500/10 text-blue-500' },
+    { label: 'Fila de Espera', value: '0', icon: 'pending_actions', color: 'bg-amber-500/10 text-amber-500' },
+    { label: 'Taxa de Sucesso', value: '100%', icon: 'analytics', color: 'bg-violet-500/10 text-violet-500' },
   ];
 
 
@@ -43,10 +43,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     <div className="flex flex-col h-full bg-background-dark pb-32 overflow-y-auto no-scrollbar">
       <header className="sticky top-0 z-20 bg-background-dark/90 backdrop-blur-md px-4 py-4 border-b border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="size-10 rounded-full border-2 border-primary/20 bg-[url('https://picsum.photos/100/100')] bg-cover"></div>
+          <div className="size-10 rounded-full border-2 border-primary/20 bg-primary/10 flex items-center justify-center">
+            <span className="material-symbols-outlined text-primary">edit_note</span>
+          </div>
           <div>
-            <h1 className="text-sm font-bold tracking-wide uppercase text-primary">SmartBlog</h1>
-            <p className="text-xs text-slate-400 font-medium">Multisite Admin</p>
+            <h1 className="text-sm font-bold tracking-wide uppercase text-primary">AutoWriter</h1>
+            <p className="text-xs text-slate-400 font-medium tracking-tight">Multisite Engine</p>
           </div>
         </div>
         <button onClick={() => onNavigate(Screen.SETTINGS)} className="size-10 flex items-center justify-center rounded-full hover:bg-white/10 text-slate-400 transition-colors">
@@ -65,7 +67,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
         <section className="grid grid-cols-2 gap-3 mb-8">
           {stats.map((stat, i) => (
-            <div key={i} className="bg-surface-dark rounded-xl p-4 shadow-sm border border-white/5 flex flex-col justify-between h-32">
+            <div
+              key={i}
+              onClick={() => stat.label.includes('Sites') && onNavigate(Screen.BLOGS)}
+              className={`bg-surface-dark rounded-xl p-4 shadow-sm border border-white/5 flex flex-col justify-between h-32 ${stat.label.includes('Sites') ? 'cursor-pointer hover:border-primary/50' : ''}`}
+            >
               <div className="flex justify-between items-start">
                 <span className={`p-2 rounded-lg ${stat.color}`}>
                   <span className="material-symbols-outlined text-[20px]">{stat.icon}</span>

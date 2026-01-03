@@ -26,6 +26,12 @@ class AutoWriter_REST {
             'callback' => [$this, 'health_check'],
             'permission_callback' => '__return_true',
         ]);
+
+        register_rest_route($this->namespace, '/discovery', [
+            'methods' => 'GET',
+            'callback' => [$this, 'discovery'],
+            'permission_callback' => [$this, 'check_permissions'],
+        ]);
     }
 
     public function check_permissions($request) {
@@ -59,6 +65,57 @@ class AutoWriter_REST {
         }
 
         return rest_ensure_response($job);
+    }
+
+    public function discovery() {
+        if (!is_multisite()) {
+            return rest_ensure_response([
+                'is_multisite' => false,
+                'sites' => [
+                    [
+                        'id' => 1,
+                        'name' => get_bloginfo('name'),
+                        'url' => get_bloginfo('url'),
+                        'categories' => $this->get_categories_for_site(),
+                        'authors' => $this->get_authors_for_site(),
+                    ]
+                ]
+            ]);
+        }
+
+        $sites = get_sites(['deleted' => 0, 'archived' => 0, 'spam' => 0]);
+        $discovery_data = [];
+
+        foreach ($sites as $site) {
+            switch_to_blog($site->blog_id);
+            $discovery_data[] = [
+                'id' => (int) $site->blog_id,
+                'name' => get_bloginfo('name'),
+                'url' => get_bloginfo('url'),
+                'categories' => $this->get_categories_for_site(),
+                'authors' => $this->get_authors_for_site(),
+            ];
+            restore_current_blog();
+        }
+
+        return rest_ensure_response([
+            'is_multisite' => true,
+            'sites' => $discovery_data,
+        ]);
+    }
+
+    private function get_categories_for_site() {
+        $categories = get_categories(['hide_empty' => false]);
+        return array_map(function($cat) {
+            return ['id' => $cat->term_id, 'name' => $cat->name, 'slug' => $cat->slug];
+        }, $categories);
+    }
+
+    private function get_authors_for_site() {
+        $users = get_users(['role__in' => ['administrator', 'editor', 'author']]);
+        return array_map(function($user) {
+            return ['id' => $user->ID, 'display_name' => $user->display_name];
+        }, $users);
     }
 
     public function health_check() {

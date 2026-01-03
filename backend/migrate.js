@@ -1,6 +1,45 @@
 import { pool } from './services/db.js';
 
 const sqls = [
+  `CREATE TABLE IF NOT EXISTS blog_styles (
+    id VARCHAR(36) PRIMARY KEY,
+    style_key VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    tone_of_voice TEXT,
+    target_audience TEXT,
+    editorial_guidelines JSON,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS article_styles (
+    id VARCHAR(36) PRIMARY KEY,
+    style_key VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    structure_blueprint JSON,
+    typical_word_count INT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS blogs (
+    id VARCHAR(36) PRIMARY KEY,
+    blog_key VARCHAR(50) UNIQUE NOT NULL,
+    blog_id BIGINT NOT NULL,
+    style_key VARCHAR(50),
+    name TEXT,
+    site_url TEXT,
+    api_url TEXT,
+    auth_credentials JSON,
+    categories_json JSON,
+    authors_json JSON,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    last_discovery TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (style_key) REFERENCES blog_styles(style_key)
+  )`,
+
   `CREATE TABLE IF NOT EXISTS batches (
     id VARCHAR(36) PRIMARY KEY,
     name TEXT NOT NULL,
@@ -20,6 +59,7 @@ const sqls = [
     blog_key TEXT NOT NULL,
     blog_id BIGINT NOT NULL,
     category TEXT,
+    article_style_key VARCHAR(50),
     objective_pt TEXT,
     theme_pt TEXT,
     language_target VARCHAR(10) NOT NULL,
@@ -32,10 +72,12 @@ const sqls = [
     wp_post_id BIGINT,
     wp_post_url TEXT,
     selected BOOLEAN NOT NULL DEFAULT FALSE,
+    metadata JSON,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE (idempotency_key),
-    FOREIGN KEY (batch_id) REFERENCES batches(id) ON DELETE CASCADE
+    FOREIGN KEY (batch_id) REFERENCES batches(id) ON DELETE CASCADE,
+    FOREIGN KEY (article_style_key) REFERENCES article_styles(style_key)
   )`,
 
   `CREATE TABLE IF NOT EXISTS job_artifacts (

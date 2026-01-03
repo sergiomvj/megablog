@@ -34,5 +34,24 @@ export const api = {
             body: data,
         });
         return res.json();
+    },
+
+    async getBlogs() {
+        const res = await fetch(`${API_BASE}/blogs`);
+        return res.json();
+    },
+
+    async addBlog(blogData: any) {
+        const res = await fetch(`${API_BASE}/blogs`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(blogData),
+        });
+        return res.json();
+    },
+
+    async syncBlog(id: string) {
+        const res = await fetch(`${API_BASE}/blogs/${id}/sync`, { method: 'POST' });
+        return res.json();
     }
 };

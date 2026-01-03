@@ -19,19 +19,24 @@ class AutoWriter_WP_Posts {
 
         // Categories
         if (!empty($post_data['categories'])) {
+            $settings = get_site_option('autowriter_settings');
+            $auto_create = ($settings['auto_create_category'] ?? 'yes') === 'yes';
+            
             $cat_ids = [];
             foreach ($post_data['categories'] as $cat_name) {
                 $cat = get_term_by('name', $cat_name, 'category');
-                if (!$cat) {
+                if (!$cat && $auto_create) {
                     $cat = wp_insert_term($cat_name, 'category');
                     if (!is_wp_error($cat)) {
                         $cat_ids[] = $cat['term_id'];
                     }
-                } else {
+                } elseif ($cat) {
                     $cat_ids[] = $cat->term_id;
                 }
             }
-            wp_set_post_categories($post_id, $cat_ids);
+            if (!empty($cat_ids)) {
+                wp_set_post_categories($post_id, $cat_ids);
+            }
         }
 
         // Tags

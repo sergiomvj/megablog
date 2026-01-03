@@ -9,16 +9,13 @@ interface NavigationProps {
 
 const Navigation: React.FC<NavigationProps> = ({ currentScreen, onNavigate }) => {
   const navItems = [
-    { id: Screen.DASHBOARD, label: 'Dashboard', icon: 'dashboard' },
-    { id: Screen.QUEUE, label: 'Queue', icon: 'layers' },
-    { id: Screen.COSTS, label: 'Costs', icon: 'payments' },
-    { id: Screen.SETTINGS, label: 'Settings', icon: 'settings' },
+    { id: Screen.DASHBOARD, label: 'Início', icon: 'dashboard' },
+    { id: Screen.QUEUE, label: 'Fila', icon: 'layers' },
+    { id: Screen.BLOGS, label: 'Sites', icon: 'language' },
+    { id: Screen.SETTINGS, label: 'Config', icon: 'settings' },
   ];
 
-  // Don't show navigation on specific detail screens if needed, 
-  // but for a mobile app, it's often persistent.
-  // In the design provided, Upload and Job Details might have custom footers.
-  const hiddenOn = [Screen.UPLOAD, Screen.JOB_DETAILS, Screen.SETTINGS];
+  const hiddenOn = [Screen.UPLOAD, Screen.JOB_DETAILS];
   if (hiddenOn.includes(currentScreen)) return null;
 
   return (
@@ -28,9 +25,8 @@ const Navigation: React.FC<NavigationProps> = ({ currentScreen, onNavigate }) =>
           <button
             key={item.id}
             onClick={() => onNavigate(item.id)}
-            className={`flex flex-col items-center gap-1 transition-colors ${
-              currentScreen === item.id ? 'text-primary' : 'text-slate-400'
-            }`}
+            className={`flex flex-col items-center gap-1 transition-colors ${currentScreen === item.id ? 'text-primary' : 'text-slate-400'
+              }`}
           >
             <span className={`material-symbols-outlined ${currentScreen === item.id ? 'filled' : ''}`}>
               {item.icon}

@@ -5,7 +5,8 @@ export enum Screen {
   JOB_DETAILS = 'JOB_DETAILS',
   SETTINGS = 'SETTINGS',
   UPLOAD = 'UPLOAD',
-  COSTS = 'COSTS'
+  COSTS = 'COSTS',
+  BLOGS = 'BLOGS'
 }
 
 export type JobStatus = 'Running' | 'Failed' | 'Needs Review' | 'Published' | 'Queued' | 'Processing';

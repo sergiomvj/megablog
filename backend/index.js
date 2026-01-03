@@ -72,6 +72,62 @@ app.get('/api/jobs', dbCheck, async (req, res) => {
     }
 });
 
+app.get('/api/blogs', dbCheck, async (req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT * FROM blogs WHERE is_active = 1');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/blogs', dbCheck, async (req, res) => {
+    const { blog_key, blog_id, site_url, api_url, application_password } = req.body;
+    try {
+        const id = uuidv4();
+        const auth = { type: 'application_password', password: application_password };
+        await pool.query(
+            'INSERT INTO blogs (id, blog_key, blog_id, site_url, api_url, auth_credentials) VALUES (?, ?, ?, ?, ?, ?)',
+            [id, blog_key, blog_id, site_url, api_url, JSON.stringify(auth)]
+        );
+        res.json({ message: 'Blog added', id });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/blogs/:id/sync', dbCheck, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const [blogs] = await pool.query('SELECT * FROM blogs WHERE id = ?', [id]);
+        if (blogs.length === 0) return res.status(404).json({ error: 'Blog not found' });
+
+        const blog = blogs[0];
+        const auth = typeof blog.auth_credentials === 'string' ? JSON.parse(blog.auth_credentials) : blog.auth_credentials;
+        const basicAuth = Buffer.from(`admin:${auth.password}`).toString('base64');
+
+        const response = await axios.get(`${blog.api_url}/autowriter/v1/discovery`, {
+            headers: { 'Authorization': `Basic ${basicAuth}` }
+        });
+
+        const discovery = response.data;
+        // Search for the specific blog_id in the multisite response
+        const siteData = discovery.sites.find(s => s.id == blog.blog_id) || discovery.sites[0];
+
+        if (siteData) {
+            await pool.query(
+                'UPDATE blogs SET name = ?, categories_json = ?, authors_json = ?, last_discovery = NOW() WHERE id = ?',
+                [siteData.name, JSON.stringify(siteData.categories), JSON.stringify(siteData.authors), id]
+            );
+        }
+
+        res.json({ message: 'Sync complete', data: siteData });
+    } catch (err) {
+        console.error('Sync error:', err.response?.data || err.message);
+        res.status(500).json({ error: err.message || 'Discovery failed' });
+    }
+});
+
 app.post('/api/upload', [dbCheck, upload.single('csv')], async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
@@ -87,10 +143,40 @@ app.post('/api/upload', [dbCheck, upload.single('csv')], async (req, res) => {
         );
 
         for (const record of records) {
+            const metadata = {
+                tags: record.tags || '',
+                tone: record.tone || '',
+                cta: record.cta || '',
+                sources: record.sources || '',
+                featured_image_url: record.featured_image_url || '',
+                top_image_url: record.top_image_url || '',
+                featured_image_alt: record.featured_image_alt || '',
+                top_image_alt: record.top_image_alt || ''
+            };
+
+            const theme = record.theme || 'Untitled Theme';
+
             await pool.query(
-                `INSERT INTO jobs (id, batch_id, job_key, idempotency_key, blog_key, blog_id, theme_pt, language_target, word_count) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [uuidv4(), batchId, record.post_title, uuidv4(), 'default', record.blog_id || 1, record.post_title, 'pt', parseInt(record.target_word_count) || 1000]
+                `INSERT INTO jobs (
+                    id, batch_id, job_key, idempotency_key, 
+                    blog_key, blog_id, category, article_style_key,
+                    objective_pt, theme_pt, language_target, word_count, metadata
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    uuidv4(),
+                    batchId,
+                    theme.substring(0, 100),
+                    uuidv4(),
+                    record.blog || 'default',
+                    parseInt(record.blog_id_override) || 1,
+                    record.category || 'Geral',
+                    record.article_style || record.style || 'analitico',
+                    record.objective || '',
+                    theme,
+                    record.language || 'pt',
+                    parseInt(record.word_count) || 1000,
+                    JSON.stringify(metadata)
+                ]
             );
         }
 
@@ -113,7 +199,35 @@ async function processBatchBackground(batchId) {
 async function runJobPipeline(job) {
     const jobId = job.id;
     const artifacts = {};
-    const context = { ...job, language: job.language_target };
+
+    // Fetch Style Context
+    const [blogData] = await pool.query(
+        `SELECT b.*, s.tone_of_voice, s.target_audience, s.editorial_guidelines, s.description as style_desc
+         FROM blogs b 
+         LEFT JOIN blog_styles s ON b.style_key = s.style_key 
+         WHERE b.blog_key = ?`,
+        [job.blog_key]
+    );
+
+    const [artStyleData] = await pool.query(
+        'SELECT * FROM article_styles WHERE style_key = ?',
+        [job.article_style_key]
+    );
+
+    const blogStyle = blogData[0] ?
+        `Tom: ${blogData[0].tone_of_voice}\nPúblico: ${blogData[0].target_audience}\nDiretrizes: ${JSON.stringify(blogData[0].editorial_guidelines)}` :
+        "Estilo padrão: Neutro e informativo.";
+
+    const articleStyle = artStyleData[0] ?
+        `Tipo: ${artStyleData[0].name}\nDescrição: ${artStyleData[0].description}` :
+        "Formato padrão: Artigo técnico.";
+
+    const context = {
+        ...job,
+        language: job.language_target,
+        blog_style: blogStyle,
+        article_style: articleStyle
+    };
 
     try {
         const update = (step, progress) => pool.query('UPDATE jobs SET current_step = ?, progress = ?, status = \'processing\' WHERE id = ?', [step, progress, jobId]);

@@ -44,12 +44,14 @@ export async function callLLM(task, jobId, context) {
 }
 
 async function attemptGeneration(task, config, context, language) {
-    const systemPrompt = SYSTEM_PROMPT.replace('{language}', language);
-    const userPromptTemplate = TASK_PROMPTS[task];
+    let systemPrompt = SYSTEM_PROMPT.replace('{language}', language);
+    let userPrompt = TASK_PROMPTS[task];
 
-    let userPrompt = userPromptTemplate;
+    // Replace all placeholders from context in BOTH prompts
     for (const [key, value] of Object.entries(context)) {
-        userPrompt = userPrompt.replace(`{${key}}`, value);
+        const placeholder = `{${key}}`;
+        systemPrompt = systemPrompt.split(placeholder).join(value);
+        userPrompt = userPrompt.split(placeholder).join(value);
     }
 
     const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
