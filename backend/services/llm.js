@@ -43,7 +43,18 @@ export async function callLLM(task, jobId, context) {
 }
 
 async function attemptGeneration(task, config, context, language) {
-    let systemPrompt = SYSTEM_PROMPT.replace('{language}', language);
+    // Fetch base prompt from settings
+    let systemPrompt = SYSTEM_PROMPT;
+    try {
+        const [settings] = await pool.query('SELECT base_prompt FROM settings WHERE id = 1');
+        if (settings[0]?.base_prompt) {
+            systemPrompt = settings[0].base_prompt;
+        }
+    } catch (err) {
+        console.warn('Failed to fetch custom system prompt, using default:', err.message);
+    }
+
+    systemPrompt = systemPrompt.replace('{language}', language);
     let userPrompt = TASK_PROMPTS[task];
 
     // Replace all placeholders from context in BOTH prompts

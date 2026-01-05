@@ -16,6 +16,7 @@ const Settings: React.FC<SettingsProps> = ({ onNavigate }) => {
     anthropic_api_key: '',
     stability_api_key: 'sk-stability-key-123',
     image_mode: 'dalle3',
+    base_prompt: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -102,6 +103,36 @@ const Settings: React.FC<SettingsProps> = ({ onNavigate }) => {
                 <button onClick={() => setShowAnthropic(!showAnthropic)} className="p-1.5 text-slate-500 hover:text-white">
                   <span className="material-symbols-outlined text-[20px]">{showAnthropic ? 'visibility' : 'visibility_off'}</span>
                 </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+
+        <div className="h-px bg-white/5 mx-4 my-2"></div>
+
+        <section className="px-4 pt-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Prompt Central</h3>
+            <span className="text-[10px] text-primary font-bold bg-primary/10 px-2 py-0.5 rounded">Master Instructions</span>
+          </div>
+
+          <div className="mb-5">
+            <label className="block text-sm font-medium mb-2 text-slate-200">Prompt Base do Sistema</label>
+            <div className="relative bg-surface-dark rounded-xl border border-white/10 focus-within:border-primary transition-all shadow-sm overflow-hidden">
+              <textarea
+                className="w-full bg-transparent border-none text-white text-[13px] p-4 focus:ring-0 font-mono leading-relaxed"
+                rows={12}
+                placeholder="Insira aqui as instruções mestras para a IA..."
+                value={settings.base_prompt}
+                onChange={(e) => handleInputChange('base_prompt', e.target.value)}
+              />
+              <div className="px-4 py-2 bg-black/40 border-t border-white/5">
+                <p className="text-[10px] text-slate-500">
+                  <span className="font-bold text-slate-400 mr-2">Dica:</span>
+                  Use os marcadores <code className="text-primary">{`{blog_style}`}</code>, <code className="text-primary">{`{article_style}`}</code> e <code className="text-primary">{`{language}`}</code> para injeção dinâmica.
+                </p>
               </div>
             </div>
           </div>

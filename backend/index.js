@@ -138,17 +138,18 @@ app.get('/api/settings', dbCheck, async (req, res) => {
 });
 
 app.post('/api/settings', dbCheck, async (req, res) => {
-    const { openai_api_key, anthropic_api_key, stability_api_key, image_mode } = req.body;
+    const { openai_api_key, anthropic_api_key, stability_api_key, image_mode, base_prompt } = req.body;
     try {
         await pool.query(
-            `INSERT INTO settings (id, openai_api_key, anthropic_api_key, stability_api_key, image_mode) 
-             VALUES (1, ?, ?, ?, ?) 
+            `INSERT INTO settings (id, openai_api_key, anthropic_api_key, stability_api_key, image_mode, base_prompt) 
+             VALUES (1, ?, ?, ?, ?, ?) 
              ON DUPLICATE KEY UPDATE 
                 openai_api_key = VALUES(openai_api_key),
                 anthropic_api_key = VALUES(anthropic_api_key),
                 stability_api_key = VALUES(stability_api_key),
-                image_mode = VALUES(image_mode)`,
-            [openai_api_key, anthropic_api_key, stability_api_key, image_mode]
+                image_mode = VALUES(image_mode),
+                base_prompt = VALUES(base_prompt)`,
+            [openai_api_key, anthropic_api_key, stability_api_key, image_mode, base_prompt]
         );
         res.json({ message: 'Settings saved' });
     } catch (err) {
