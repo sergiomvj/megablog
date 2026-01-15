@@ -46,6 +46,10 @@ export const api = {
         const res = await fetch(`${API_BASE}/jobs/${id}`, { method: 'DELETE' });
         return res.json();
     },
+    async retryJob(id: string) {
+        const res = await fetch(`${API_BASE}/jobs/${id}/retry`, { method: 'POST' });
+        return res.json();
+    },
 
     async uploadCSV(data: FormData) {
         const res = await fetch(`${API_BASE}/upload`, {

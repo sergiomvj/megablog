@@ -432,6 +432,16 @@ app.delete('/api/jobs/:id', dbCheck, async (req, res) => {
     }
 });
 
+app.post('/api/jobs/:id/retry', dbCheck, async (req, res) => {
+    try {
+        await pool.query('UPDATE jobs SET status = \'queued\', last_error = NULL WHERE id = ?', [req.params.id]);
+        processNextInQueue();
+        res.json({ message: 'Job retrying' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/upload', [dbCheck, upload.single('csv')], async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 

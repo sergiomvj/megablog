@@ -271,7 +271,13 @@ const JobDetails: React.FC<JobDetailsProps> = ({ jobId, onNavigate }) => {
             Atualizar
           </button>
           {['failed', 'Failed'].includes(job.status) && (
-            <button className="flex-[2] h-12 rounded-lg bg-primary text-white font-bold shadow-lg shadow-primary/25 hover:bg-blue-600 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+            <button
+              onClick={async () => {
+                await api.retryJob(job.id);
+                fetchJobData();
+              }}
+              className="flex-[2] h-12 rounded-lg bg-primary text-white font-bold shadow-lg shadow-primary/25 hover:bg-blue-600 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            >
               <span className="material-symbols-outlined text-[20px]">play_arrow</span>
               Reiniciar Job
             </button>
