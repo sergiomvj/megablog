@@ -7,16 +7,22 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
-    console.warn('⚠️ Credenciais do Supabase não encontradas. O sistema pode falhar se tentar usar o Supabase.');
+    console.error('❌ CRITICAL: Supabase credentials (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) are missing!');
 }
 
 // Cliente para o Backend (Service Role - Bypass RLS)
-export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false
-    }
-});
+export const supabase = (supabaseUrl && supabaseServiceKey)
+    ? createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    })
+    : null;
+
+if (!supabase) {
+    console.error('⚠️ Supabase client could not be initialized. API will fail.');
+}
 
 // Duck-typing para manter compatibilidade com o pool do mysql2 enquanto migramos
 // Isso permite que o código que usa 'pool.query' continue funcionando ou nos dê um erro claro
